@@ -6,9 +6,9 @@ from django.db.models import Manager
 
 from django_monitor.middleware import get_current_user
 from django_monitor.models import MonitorEntry, MONITOR_TABLE
-from django_monitor.conf import (
-    STATUS_DICT, PENDING_STATUS, APPROVED_STATUS, CHALLENGED_STATUS
-)
+from django_monitor.conf import (STATUS_DICT, PENDING_STATUS, APPROVED_STATUS,
+                                 CHALLENGED_STATUS)
+
 
 def create_moderate_perms(app, created_models, verbosity, **kwargs):
     """ This will create moderate permissions for all registered models"""
@@ -28,6 +28,7 @@ def create_moderate_perms(app, created_models, verbosity, **kwargs):
         if created and verbosity >= 2:
             print "Adding permission '%s'" % p
 
+
 def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
     """ Add additional fields like status to moderated models"""
     # Inheriting from old manager
@@ -41,7 +42,7 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
 
     class CustomQuerySet(base_queryset):
         """ Chainable queryset for checking status """
-       
+
         def _by_status(self, field_name, status):
             """ Filter queryset by given status"""
             where_clause = '%s = %%s' % (field_name)
@@ -169,7 +170,7 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
     manager = CustomManager()
     cls.add_to_class(manager_name, manager)
     cls.add_to_class(monitor_name, property(_get_monitor_entry))
-    cls.add_to_class('monitor_status', property(_get_monitor_status)) 
+    cls.add_to_class('monitor_status', property(_get_monitor_status))
     cls.add_to_class(status_name, lambda self: self.monitor_status)
     cls.add_to_class(
         'get_monitor_status_display', _get_status_display
@@ -195,11 +196,12 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
     # Copy manager to default_class
     cls._default_manager = manager
 
+
 def save_handler(sender, instance, **kwargs):
     """
     The following things are done after creating an object in moderated class:
     1. Creates monitor entries for object and its parents.
-    2. Auto-approves object, its parents & specified related objects if user 
+    2. Auto-approves object, its parents & specified related objects if user
        has ``moderate`` permission. Otherwise, they are put in pending.
     """
     import django_monitor
@@ -242,13 +244,14 @@ def save_handler(sender, instance, **kwargs):
                 )
             me.moderate(status, user)
 
-        # Moderate related objects too... 
+        # Moderate related objects too...
         model = django_monitor.model_from_queue(instance.__class__)
         if model:
             for rel_name in model['rel_fields']:
                 rel_obj = getattr(instance, rel_name, None)
                 if rel_obj:
                     moderate_rel_objects(rel_obj, status, user)
+
 
 def moderate_rel_objects(given, status, user = None):
     """
@@ -280,6 +283,7 @@ def moderate_rel_objects(given, status, user = None):
                 rel_obj = getattr(given, rel_name, None)
                 if rel_obj:
                     moderate_rel_objects(rel_obj, status, user)
+
 
 def delete_handler(sender, instance, **kwargs):
     """ When an instance is deleted, delete corresponding monitor_entries too"""

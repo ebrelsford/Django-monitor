@@ -9,6 +9,7 @@ from django_monitor.conf import (
 )
 STATUS_CHOICES = STATUS_DICT.items()
 
+
 class MonitorEntryManager(models.Manager):
     """ Custom Manager for MonitorEntry"""
 
@@ -20,10 +21,11 @@ class MonitorEntryManager(models.Manager):
         except MonitorEntry.DoesNotExist:
             pass
 
+
 class MonitorEntry(models.Model):
     """ Each Entry will monitor the status of one moderated model object"""
     objects = MonitorEntryManager()
-    
+
     timestamp = models.DateTimeField(
         auto_now_add = True, blank = True, null = True
     )
@@ -93,5 +95,5 @@ class MonitorEntry(models.Model):
         """ Deprecated."""
         return self.status == CHALLENGED_STATUS
 
-MONITOR_TABLE = MonitorEntry._meta.db_table
 
+MONITOR_TABLE = MonitorEntry._meta.db_table

@@ -1,8 +1,8 @@
 {% extends "admin/base_site.html" %}
-{% load adminmedia admin_list i18n %}
+{% load admin_list i18n static %}
 {% block extrastyle %}
   {{ block.super }}
-  <link rel="stylesheet" type="text/css" href="{% admin_media_prefix %}css/changelists.css" />
+  <link rel="stylesheet" type="text/css" href="{% static "admin/css/changelists.css" %}" />
   {{ media.css }}
     <style>
       #changelist table thead th:first-child {width: inherit}

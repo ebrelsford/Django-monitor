@@ -1,5 +1,5 @@
 __author__ = "Rajeesh Nair"
-__version__ = "0.2"
+__version__ = "0.3.0"
 __copyright__ = "Copyright (c) 2011 Rajeesh"
 __license__ = "BSD"
 
@@ -40,7 +40,7 @@ def nq(
         signals.post_save.connect(save_handler, sender = model)
         signals.pre_delete.connect(delete_handler, sender = model)
         registered_model = get_model(
-            model._meta.app_label, model._meta.object_name, False
+            model._meta.app_label, model._meta.object_name #, False
         )
         add_fields(
             registered_model, manager_name, status_name,
@@ -60,4 +60,3 @@ signals.post_syncdb.connect(
     create_moderate_perms,
     dispatch_uid = "django-monitor.create_moderate_perms"
 )
-

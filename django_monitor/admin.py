@@ -1,26 +1,23 @@
+from functools import update_wrapper
 
-from django.contrib.contenttypes.models import ContentType
 from django.contrib import admin
-from django.contrib.admin.filterspecs import FilterSpec
+
 from django.shortcuts import render_to_response
-from django.utils.functional import update_wrapper
 from django.template import RequestContext
 from django.utils.safestring import mark_safe
 
-from django_monitor.actions import (
-    approve_selected, challenge_selected, reset_to_pending
-)
+from django_monitor.actions import (approve_selected, challenge_selected,
+                                    reset_to_pending)
 from django_monitor.filter import MonitorFilter
 from django_monitor import model_from_queue, queued_models
-from django_monitor.conf import (
-    PENDING_STATUS, CHALLENGED_STATUS, APPROVED_STATUS,
-    PENDING_DESCR, CHALLENGED_DESCR
-)
+from django_monitor.conf import (PENDING_STATUS, CHALLENGED_STATUS,
+                                 APPROVED_STATUS, PENDING_DESCR,
+                                 CHALLENGED_DESCR)
 from django_monitor.models import MonitorEntry
 
-# Our objective is to place the custom monitor-filter on top
-FilterSpec.filter_specs.insert(
-    0, (lambda f: getattr(f, 'monitor_filter', False), MonitorFilter)
+
+MonitorFilter.register(
+    lambda f: getattr(f, 'monitor_filter', False), MonitorFilter, True
 )
 
 
@@ -34,8 +31,8 @@ class MEAdmin(admin.ModelAdmin):
     change_list_template = 'admin/django_monitor/monitorentry/change_list.html'
 
     def get_urls(self):
-        """ The only url allowed is that for changelist_view. """
-        from django.conf.urls.defaults import patterns, url
+        """The only url allowed is that for changelist_view. """
+        from django.conf.urls import patterns, url
 
         def wrap(view):
             def wrapper(*args, **kwargs):
@@ -53,7 +50,7 @@ class MEAdmin(admin.ModelAdmin):
         return urlpatterns
 
     def has_add_permission(self, request, obj = None):
-        """ Returns False so that no add button is displayed in admin index"""
+        """Return False so that no add button is displayed in admin index"""
         return False
 
     def has_change_permission(self, request, obj = None):
@@ -112,6 +109,7 @@ class MEAdmin(admin.ModelAdmin):
 
 admin.site.register(MonitorEntry, MEAdmin)
 
+
 class MonitorAdmin(admin.ModelAdmin):
     """ModelAdmin for monitored models should inherit this."""
 
@@ -159,7 +157,7 @@ class MonitorAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, request, obj = None):
         """ Overridden to include protected_fields as well."""
         if (
-            self.is_monitored() and 
+            self.is_monitored() and
             obj is not None and obj.is_approved
         ):
             return self.readonly_fields + self.protected_fields
@@ -217,4 +215,3 @@ class MonitorAdmin(admin.ModelAdmin):
         ):
             return False
         return super(MonitorAdmin, self).has_delete_permission(request, obj)
-

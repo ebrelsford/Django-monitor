@@ -5,8 +5,10 @@ except ImportError:
 
 _thread_locals = local()
 
+
 def get_current_user():
     return getattr(_thread_locals, 'monitor_user', None)
+
 
 class MonitorMiddleware(object):
     def process_request(self, request):

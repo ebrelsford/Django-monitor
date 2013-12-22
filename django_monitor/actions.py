@@ -1,21 +1,18 @@
-
 from django.core.exceptions import PermissionDenied
 from django.contrib.admin.util import model_ngettext
 from django.utils.translation import ugettext_lazy, ugettext as _
 
 from django_monitor.util import moderate_rel_objects
 from django_monitor import model_from_queue
-from django_monitor.conf import (
-    STATUS_DICT, PENDING_STATUS, APPROVED_STATUS, CHALLENGED_STATUS
-)
-from django_monitor.models import MonitorEntry
+from django_monitor.conf import (STATUS_DICT, PENDING_STATUS, APPROVED_STATUS,
+                                 CHALLENGED_STATUS)
+
 
 def moderate_selected(modeladmin, request, queryset, status):
     """
     Generic action to moderate selected objects plus all related objects.
     """
-    opts = modeladmin.model._meta
-    
+
     # If moderation is disabled..
     if not model_from_queue(modeladmin.model):
         return 0
@@ -26,7 +23,7 @@ def moderate_selected(modeladmin, request, queryset, status):
     if (
         (status == PENDING_STATUS and
             not modeladmin.has_change_permission(request)
-        ) or 
+        ) or
         (status != PENDING_STATUS and
             not modeladmin.has_moderate_permission(request)
         )
@@ -51,7 +48,8 @@ def moderate_selected(modeladmin, request, queryset, status):
             #me = MonitorEntry.objects.get_for_instance(obj)
         moderate_rel_objects(queryset, status, request.user)
     return q_count
-        
+
+
 def approve_selected(modeladmin, request, queryset):
     """ Default action to approve selected objects """
     ap_count = moderate_selected(modeladmin, request, queryset, APPROVED_STATUS)
@@ -65,9 +63,11 @@ def approve_selected(modeladmin, request, queryset):
         )
     # Return None to display the change list page again.
     return None
+
 approve_selected.short_description = ugettext_lazy(
     "Approve selected %(verbose_name_plural)s"
 )
+
 
 def challenge_selected(modeladmin, request, queryset):
     """ Default action to challenge selected objects """
@@ -82,9 +82,11 @@ def challenge_selected(modeladmin, request, queryset):
         )
     # Return None to display the change list page again.
     return None
+
 challenge_selected.short_description = ugettext_lazy(
     "Challenge selected %(verbose_name_plural)s"
 )
+
 
 def reset_to_pending(modeladmin, request, queryset):
     """ Default action to reset selected object's status to pending """
@@ -98,7 +100,7 @@ def reset_to_pending(modeladmin, request, queryset):
             }
         )
     return None
+
 reset_to_pending.short_description = ugettext_lazy(
     "Reset selected %(verbose_name_plural)s to pending"
 )
-

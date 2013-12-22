@@ -1,12 +1,15 @@
 from setuptools import setup, find_packages
 
+import django_monitor
+
+
 setup(
     name = 'django-monitor',
-    version = "0.2",
+    version = django_monitor.__version__,
     description = "Django app to moderate model objects",
     long_description = open("README.rst").read(),
     install_requires = [
-        "django >= 1.1",
+        "django >= 1.6",
     ],
     classifiers = [
         'Development Status :: 4 - Beta',
@@ -26,4 +29,3 @@ setup(
     include_package_data = True,
     zip_safe = True,
 )
-
