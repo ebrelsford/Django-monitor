@@ -27,9 +27,8 @@ class MonitorMixin(ModelFormMixin):
 
     def moderate_object(self, obj, user, status):
         """Moderate the given object"""
-        try:
-            me = MonitorEntry.objects.get_for_instance(obj)
-        except MonitorEntry.DoesNotExist:
+        me = MonitorEntry.objects.get_for_instance(obj)
+        if not me:
             me = MonitorEntry(
                 content_object=obj,
                 timestamp=datetime.now()
