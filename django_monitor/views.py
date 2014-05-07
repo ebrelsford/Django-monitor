@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.contrib.contenttypes.models import ContentType
+from django.http import HttpResponseRedirect
 from django.views.generic.edit import ModelFormMixin
 
 from django_monitor import model_from_queue
@@ -86,4 +87,4 @@ class MonitorMixin(ModelFormMixin):
         self.moderate_parents(self.object, user, status)
         self.moderate_related(self.object, user, status)
 
-        return super(MonitorMixin, self).form_valid(form)
+        return HttpResponseRedirect(self.get_success_url())
