@@ -124,7 +124,7 @@ class MonitorAdmin(admin.ModelAdmin):
             list(self.list_display) + ['get_monitor_status_display']
         )
 
-    def queryset(self, request):
+    def get_queryset(self, request):
         """
         Django does not allow using non-fields in list_filter. (As of 1.3).
         Using params not mentioned in list_filter will raise error in changelist.
