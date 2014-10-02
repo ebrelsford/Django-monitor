@@ -38,7 +38,7 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
         else:
             base_manager = Manager
     # Queryset inheriting from manager's Queryset
-    base_queryset = base_manager().get_query_set().__class__
+    base_queryset = base_manager().get_queryset().__class__
 
     class CustomQuerySet(base_queryset):
         """ Chainable queryset for checking status """
@@ -77,7 +77,7 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
         use_for_related_fields = True
 
         # add monitor_id and status_name attributes to the query
-        def get_query_set(self):
+        def get_queryset(self):
             # parameters to help with generic SQL
             db_table = self.model._meta.db_table
             pk_name = self.model._meta.pk.attname
@@ -95,7 +95,7 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
             tables = [MONITOR_TABLE]
 
             # build extra query then copy model/query to a CustomQuerySet
-            q = super(CustomManager, self).get_query_set().extra(
+            q = super(CustomManager, self).get_queryset().extra(
                 select = select, where = where, tables = tables
             )
             return CustomQuerySet(self.model, q.query)
@@ -105,7 +105,7 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
             try:
                 return getattr(self, attr)
             except AttributeError:
-                return getattr(self.get_query_set(), attr)
+                return getattr(self.get_queryset(), attr)
 
     def _get_monitor_status(self):
         """
