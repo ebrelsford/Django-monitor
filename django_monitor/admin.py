@@ -83,8 +83,8 @@ class MEAdmin(admin.ModelAdmin):
                 # ``django_monitor.tests.apps.testapp.models``.
                 continue
 
-            ip_count = model_admin.queryset(request).pending().count()
-            ch_count = model_admin.queryset(request).challenged().count()
+            ip_count = model_admin.get_queryset(request).pending().count()
+            ch_count = model_admin.get_queryset(request).challenged().count()
 
             app_label = model._meta.app_label
             if ip_count or ch_count:
@@ -132,7 +132,7 @@ class MonitorAdmin(admin.ModelAdmin):
         We will check the request.GET here and if there's a `status` in it,
         Remove that and filter the qs by status.
         """
-        qs = super(MonitorAdmin, self).queryset(request)
+        qs = super(MonitorAdmin, self).get_queryset(request)
         status = request.GET.get('status', None)
         # status is not among list_filter entries. So its presence will raise
         # IncorrectLookupParameters when django tries to build-up changelist.
