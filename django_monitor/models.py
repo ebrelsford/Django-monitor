@@ -1,7 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
-from django.contrib.contenttypes.models import ContentType
-from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey
 import datetime
 
 from django_monitor.conf import (
@@ -14,6 +12,7 @@ class MonitorEntryManager(models.Manager):
     """ Custom Manager for MonitorEntry"""
 
     def get_for_instance(self, obj):
+        from django.contrib.contenttypes.models import ContentType
         ct = ContentType.objects.get_for_model(obj.__class__)
         try:
             mo = MonitorEntry.objects.get(content_type = ct, object_id = obj.pk)
@@ -30,13 +29,13 @@ class MonitorEntry(models.Model):
         auto_now_add = True, blank = True, null = True
     )
     status = models.CharField(max_length = 2, choices = STATUS_CHOICES)
-    status_by = models.ForeignKey(User, blank = True, null = True)
+    status_by = models.ForeignKey('auth.User', blank = True, null = True)
     status_date = models.DateTimeField(blank = True, null = True)
     notes = models.CharField(max_length = 100, blank = True)
 
-    content_type = models.ForeignKey(ContentType)
+    content_type = models.ForeignKey('contenttypes.ContentType')
     object_id = models.PositiveIntegerField()
-    content_object = generic.GenericForeignKey('content_type', 'object_id')
+    content_object = GenericForeignKey('content_type', 'object_id')
 
     class Meta:
         app_label = 'django_monitor'

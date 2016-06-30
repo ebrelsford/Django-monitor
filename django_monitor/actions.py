@@ -1,5 +1,5 @@
 from django.core.exceptions import PermissionDenied
-from django.contrib.admin.util import model_ngettext
+from django.contrib.admin.utils import model_ngettext
 from django.utils.translation import ugettext_lazy, ugettext as _
 
 from django_monitor.util import moderate_rel_objects

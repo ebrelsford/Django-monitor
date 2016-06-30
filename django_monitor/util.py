@@ -1,18 +1,17 @@
 
 from datetime import datetime
 
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Manager
 
 from django_monitor.middleware import get_current_user
-from django_monitor.models import MonitorEntry, MONITOR_TABLE
 from django_monitor.conf import (STATUS_DICT, PENDING_STATUS, APPROVED_STATUS,
                                  CHALLENGED_STATUS)
 
 
-def create_moderate_perms(app, created_models, verbosity, **kwargs):
+def create_moderate_perms(sender, verbosity=0, **kwargs):
     """ This will create moderate permissions for all registered models"""
     from django.contrib.auth.models import Permission
+    from django.contrib.contenttypes.models import ContentType
 
     from django_monitor import queued_models
 
@@ -78,6 +77,9 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
 
         # add monitor_id and status_name attributes to the query
         def get_queryset(self):
+            from django_monitor.models import MONITOR_TABLE
+            from django.contrib.contenttypes.models import ContentType
+
             # parameters to help with generic SQL
             db_table = self.model._meta.db_table
             pk_name = self.model._meta.pk.attname
@@ -118,6 +120,7 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
 
     def _get_monitor_entry(self):
         """ accessor for monitor_entry that caches the object """
+        from django_monitor.models import MonitorEntry
         if not hasattr(self, '_monitor_entry'):
             self._monitor_entry = MonitorEntry.objects.get_for_instance(self)
         return self._monitor_entry
@@ -130,6 +133,9 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
     def moderate(self, status, user = None, notes = ''):
         """ developers may use this to moderate objects """
         import django_monitor
+        from django_monitor.models import MonitorEntry
+        from django.contrib.contenttypes.models import ContentType
+
         getattr(self, monitor_name).moderate(status, user, notes)
         # Auto-Moderate parents also
         monitored_parents = filter(
@@ -205,6 +211,9 @@ def save_handler(sender, instance, **kwargs):
        has ``moderate`` permission. Otherwise, they are put in pending.
     """
     import django_monitor
+    from django_monitor.models import MonitorEntry
+    from django.contrib.contenttypes.models import ContentType
+
     # Auto-moderation
     user = get_current_user()
     opts = instance.__class__._meta
@@ -288,6 +297,9 @@ def moderate_rel_objects(given, status, user = None):
 def delete_handler(sender, instance, **kwargs):
     """ When an instance is deleted, delete corresponding monitor_entries too"""
     from django_monitor import model_from_queue
+    from django_monitor.models import MonitorEntry
+    from django.contrib.contenttypes.models import ContentType
+
     if model_from_queue(sender):
         me = MonitorEntry.objects.get_for_instance(instance)
         if me:

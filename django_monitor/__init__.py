@@ -3,11 +3,11 @@ __version__ = "0.3.5"
 __copyright__ = "Copyright (c) 2011 Rajeesh"
 __license__ = "BSD"
 
+from django.apps import apps
 from django.dispatch import Signal
 from django.db.models import signals
-from django.db.models.loading import get_model
 
-from django_monitor.util import (
+from .util import (
     create_moderate_perms, add_fields, save_handler, delete_handler
 )
 
@@ -39,7 +39,7 @@ def nq(
     if not model_from_queue(model):
         signals.post_save.connect(save_handler, sender = model)
         signals.pre_delete.connect(delete_handler, sender = model)
-        registered_model = get_model(
+        registered_model = apps.get_model(
             model._meta.app_label, model._meta.object_name #, False
         )
         add_fields(
@@ -56,7 +56,7 @@ def nq(
 
 post_moderation = Signal(providing_args = ["instance"])
 
-signals.post_syncdb.connect(
+signals.post_migrate.connect(
     create_moderate_perms,
     dispatch_uid = "django-monitor.create_moderate_perms"
 )
