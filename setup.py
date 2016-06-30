@@ -9,7 +9,7 @@ setup(
     description = "Django app to moderate model objects",
     long_description = open("README.rst").read(),
     install_requires = [
-        "django >= 1.6",
+        "django >= 1.9",
     ],
     classifiers = [
         'Development Status :: 4 - Beta',
