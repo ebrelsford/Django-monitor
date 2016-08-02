@@ -32,7 +32,7 @@ class MEAdmin(admin.ModelAdmin):
 
     def get_urls(self):
         """The only url allowed is that for changelist_view. """
-        from django.conf.urls import patterns, url
+        from django.conf.urls import url
 
         def wrap(view):
             def wrapper(*args, **kwargs):
@@ -41,12 +41,12 @@ class MEAdmin(admin.ModelAdmin):
 
         info = self.model._meta.app_label, self.model._meta.model_name
 
-        urlpatterns = patterns('',
+        urlpatterns = [
             url(r'^$',
                 wrap(self.changelist_view),
                 name = '%s_%s_changelist' % info
             ),
-        )
+        ]
         return urlpatterns
 
     def has_add_permission(self, request, obj = None):
