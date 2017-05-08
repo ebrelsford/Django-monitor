@@ -2,7 +2,7 @@ from functools import update_wrapper
 
 from django.contrib import admin
 
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template import RequestContext
 from django.utils.safestring import mark_safe
 
@@ -97,14 +97,14 @@ class MEAdmin(admin.ModelAdmin):
                     ),
                 })
         model_list.sort(key = lambda x: (x['app_name'], x['model_name']))
-        return render_to_response(
+        return render(
+            request,
             self.change_list_template,
             {
                 'model_list': model_list,
                 'ip_status': PENDING_STATUS, 'ip_descr': PENDING_DESCR,
                 'ch_status': CHALLENGED_STATUS, 'ch_descr': CHALLENGED_DESCR
-            },
-            context_instance = RequestContext(request)
+            }
         )
 
 admin.site.register(MonitorEntry, MEAdmin)

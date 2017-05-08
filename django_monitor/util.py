@@ -30,164 +30,13 @@ def create_moderate_perms(sender, verbosity=0, **kwargs):
 
 def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
     """ Add additional fields like status to moderated models"""
-    # Inheriting from old manager
-    if base_manager is None:
-        if hasattr(cls, manager_name):
-            base_manager = getattr(cls, manager_name).__class__
-        else:
-            base_manager = Manager
-    # Queryset inheriting from manager's Queryset
-    base_queryset = base_manager().get_queryset().__class__
 
-    class CustomQuerySet(base_queryset):
-        """ Chainable queryset for checking status """
-
-        def _by_status(self, field_name, status):
-            """ Filter queryset by given status"""
-            where_clause = '%s = %%s' % (field_name)
-            return self.extra(where = [where_clause], params = [status])
-
-        def approved(self):
-            """ All approved objects"""
-            return self._by_status(status_name, APPROVED_STATUS)
-
-        def exclude_approved(self):
-            """ All not-approved objects"""
-            where_clause = '%s != %%s' % (status_name)
-            return self.extra(
-                where = [where_clause], params = [APPROVED_STATUS]
-            )
-
-        def pending(self):
-            """ All pending objects """
-            return self._by_status(status_name, PENDING_STATUS)
-
-        def challenged(self):
-            """ All challenged objects """
-            return self._by_status(status_name, CHALLENGED_STATUS)
-
-    class CustomManager(base_manager):
-        """ custom manager that adds parameters and uses custom QuerySet """
-
-        # use_for_related_fields is read when the model class is prepared
-        # because CustomManager isn't set on the class at the time
-        # this really has no effect, but is set to True because we are going
-        # to hijack cls._default_manager later
-        use_for_related_fields = True
-
-        # add monitor_id and status_name attributes to the query
-        def get_queryset(self):
-            from django_monitor.models import MONITOR_TABLE
-            from django.contrib.contenttypes.models import ContentType
-
-            # parameters to help with generic SQL
-            db_table = self.model._meta.db_table
-            pk_name = self.model._meta.pk.attname
-            content_type = ContentType.objects.get_for_model(self.model).id
-
-            # extra params - status and id of object (for later access)
-            select = {
-                '_monitor_id': '%s.id' % MONITOR_TABLE,
-                '_status': '%s.status' % MONITOR_TABLE,
-            }
-            where = [
-                '%s.content_type_id=%s' % (MONITOR_TABLE, content_type),
-                '%s.object_id=%s.%s' % (MONITOR_TABLE, db_table, pk_name)
-            ]
-            tables = [MONITOR_TABLE]
-
-            # build extra query then copy model/query to a CustomQuerySet
-            q = super(CustomManager, self).get_queryset().extra(
-                select = select, where = where, tables = tables
-            )
-            return CustomQuerySet(self.model, q.query)
-
-        def __getattr__(self, attr):
-            """ Try to get the rest of attributes from queryset """
-            try:
-                return getattr(self, attr)
-            except AttributeError:
-                return getattr(self.get_queryset(), attr)
-
-    def _get_monitor_status(self):
-        """
-        Accessor for monitor_status.
-        To be added to the model as a property, ``monitor_status``.
-        """
-        if not hasattr(self, '_status'):
-            return getattr(self, monitor_name).status
-        return self._status
-
-    def _get_monitor_entry(self):
-        """ accessor for monitor_entry that caches the object """
-        from django_monitor.models import MonitorEntry
-        if not hasattr(self, '_monitor_entry'):
-            self._monitor_entry = MonitorEntry.objects.get_for_instance(self)
-        return self._monitor_entry
-
-    def _get_status_display(self):
-        """ to display the moderation status in verbose """
-        return STATUS_DICT[self.monitor_status]
-    _get_status_display.short_description = status_name
-
-    def moderate(self, status, user = None, notes = ''):
-        """ developers may use this to moderate objects """
-        import django_monitor
-        from django_monitor.models import MonitorEntry
-        from django.contrib.contenttypes.models import ContentType
-
-        getattr(self, monitor_name).moderate(status, user, notes)
-        # Auto-Moderate parents also
-        monitored_parents = filter(
-            lambda x: django_monitor.model_from_queue(x),
-            self._meta.parents.keys()
-        )
-        for parent in monitored_parents:
-            parent_ct = ContentType.objects.get_for_model(parent)
-            parent_pk_field = self._meta.get_ancestor_link(parent)
-            parent_pk = getattr(self, parent_pk_field.attname)
-            me = MonitorEntry.objects.get(
-                content_type = parent_ct, object_id = parent_pk
-            )
-            me.moderate(status, user)
-
-    def approve(self, user = None, notes = ''):
-        """ Approve the object & its parents."""
-        self.moderate(APPROVED_STATUS, user, notes)
-
-    def challenge(self, user = None, notes = ''):
-        """Challenge"""
-        self.moderate(CHALLENGED_STATUS, user, notes)
-
-    def reset_to_pending(self, user = None, notes = ''):
-        """Reset"""
-        self.moderate(PENDING_STATUS, user, notes)
-
-    def is_approved(self):
-        return self.monitor_status == APPROVED_STATUS
-
-    def is_pending(self):
-        return self.monitor_status == PENDING_STATUS
-
-    def is_challenged(self):
-        return self.monitor_status == CHALLENGED_STATUS
-
-    # Add custom manager & monitor_entry to class
-    manager = CustomManager()
-    cls.add_to_class(manager_name, manager)
-    cls.add_to_class(monitor_name, property(_get_monitor_entry))
-    cls.add_to_class('monitor_status', property(_get_monitor_status))
+    cls.add_to_class(monitor_name, property(cls._get_monitor_entry))
+    cls.add_to_class('monitor_status', property(cls._get_monitor_status))
     cls.add_to_class(status_name, lambda self: self.monitor_status)
     cls.add_to_class(
-        'get_monitor_status_display', _get_status_display
+        'get_monitor_status_display', cls._get_status_display
     )
-    cls.add_to_class('moderate', moderate)
-    cls.add_to_class('approve', approve)
-    cls.add_to_class('challenge', challenge)
-    cls.add_to_class('reset_to_pending', reset_to_pending)
-    cls.add_to_class('is_approved', property(is_approved))
-    cls.add_to_class('is_challenged', property(is_challenged))
-    cls.add_to_class('is_pending', property(is_pending))
     # We have a custom filter defined in django_monitor.filter to enable
     # filtering of model objects by their moderation status.
     # But `status` is not a real field and Django does not support filters
@@ -198,9 +47,6 @@ def add_fields(cls, manager_name, status_name, monitor_name, base_manager):
     # So let's use ``id``. Latest Django dev-version has undergone changes to
     # allow non-fields. So this hack must be for a short period of time.
     cls._meta.get_field('id').monitor_filter = True
-
-    # Copy manager to default_class
-    cls._default_manager = manager
 
 
 def save_handler(sender, instance, **kwargs):

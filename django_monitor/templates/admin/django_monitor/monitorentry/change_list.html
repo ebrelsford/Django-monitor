@@ -44,7 +44,7 @@
             <th>{{ ip_descr }}</th><th>{{ ch_descr }}</th></tr>
       </thead>
       {% for model in model_list %}
-      <tr class="{% cycle row1,row2 %}">
+      <tr class="{% cycle 'row1' 'row2' %}">
           <td>{{ model.app_name }}</td>
           <td>{{ model.model_name|capfirst }}</td>
           <td>{% if model.pending %}
