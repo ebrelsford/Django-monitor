@@ -1,5 +1,5 @@
 __author__ = "Rajeesh Nair"
-__version__ = "0.4.1"
+__version__ = "0.5.0"
 __copyright__ = "Copyright (c) 2011 Rajeesh"
 __license__ = "BSD"
 
